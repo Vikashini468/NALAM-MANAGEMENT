@@ -1,0 +1,153 @@
+/* =========================
+   GLOBAL RESET
+========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* =========================
+   THEME COLORS
+========================= */
+:root {
+  --blue: #1a6fc4;
+  --blue-dark: #134f8f;
+  --green: #27ae60;
+  --bg: #f4f8fd;
+  --text: #1c2b3a;
+  --card-shadow: 0 4px 24px rgba(26,111,196,0.10);
+}
+
+/* =========================
+   BODY
+========================= */
+body {
+  background: var(--bg);
+  display: flex;
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, var(--blue-dark), var(--blue));
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+}
+
+/* NAV ITEMS */
+.nav-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.08);
+  transition: 0.2s;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* =========================
+   MAIN AREA
+========================= */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TOP BAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  background: white;
+  border-bottom: 1px solid rgba(26,111,196,0.15);
+}
+
+.topbar input {
+  width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+/* =========================
+   CARDS
+========================= */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+.panel {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  height: 450px;
+  overflow-y: auto;
+}
+
+/* =========================
+   PATIENT LIST
+========================= */
+.patient {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.patient:hover {
+  background: #f0f6ff;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.primary-btn {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.primary-btn:hover {
+  background: var(--blue-dark);
+}
+
+.small-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* =========================
+   SECTIONS
+========================= */
+.section {
+  display: none;
+  padding: 20px;
+}
+
+.section.active {
+  display: block;
+}

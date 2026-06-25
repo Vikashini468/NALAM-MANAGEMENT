@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Patient Dashboard</title>
+  <link rel="stylesheet" href="style1.css">
+  <style>
+    .profile-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f4f8ff;
+  border-radius: 10px;
+  font-size: 14px;
+}
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Patient Panel</h2>
+   <div class="nav-item" onclick="showProfile()">
+  Profile
+</div>
+  <div class="nav-item">Doctors</div>
+  <div class="nav-item">Appointments</div>
+  <div class="nav-item">Prescriptions</div>
+  <div class="nav-item">Reports</div>
+</div>
+
+<div class="main">
+
+  <div class="topbar">
+    <input placeholder="Search doctor">
+    <div class="profile">Patient</div>
+  </div>
+
+  <div class="section active">
+    <div class="card">
+      <h2>Welcome Patient</h2>
+      <p>Book doctors and view reports here</p>
+    </div>
+  </div>
+<div id="profileSection" style="display:none; padding:20px;">
+    <h2>Patient Profile</h2>
+
+    <img id="p_photo" width="120" height="120" style="border-radius:50%;">
+
+    <p id="p_name"></p>
+    <p id="p_username"></p>
+    <p id="p_email"></p>
+    <p id="p_mobile"></p>
+    <p id="p_role"></p>
+
+    <hr>
+
+    <p id="p_age"></p>
+    <p id="p_gender"></p>
+    <p id="p_blood"></p>
+    <p id="p_weight"></p>
+    <p id="p_allergies"></p>
+    <p id="p_hospital"></p>
+    <p id="p_address"></p>
+</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const userId = params.get("id");
+
+function showProfile() {
+    document.getElementById("profileSection").style.display = "block";
+    loadProfile();
+}
+
+async function loadProfile() {
+    const res = await fetch(`/api/patient/profile/${userId}`);
+    const data = await res.json();
+
+    const user = data.user;
+    const patient = data.patient;
+
+    // USER TABLE
+    document.getElementById("p_name").innerText = "Name: " + user.name;
+    document.getElementById("p_username").innerText = "Username: " + user.username;
+    document.getElementById("p_email").innerText = "Email: " + user.email;
+    document.getElementById("p_mobile").innerText = "Mobile: " + user.mobile;
+    document.getElementById("p_role").innerText = "Role: " + user.role;
+
+    // PATIENT TABLE
+    document.getElementById("p_age").innerText = "Age: " + patient.age;
+    document.getElementById("p_gender").innerText = "Gender: " + patient.gender;
+    document.getElementById("p_blood").innerText = "Blood Group: " + patient.blood_group;
+    document.getElementById("p_weight").innerText = "Weight: " + patient.weight;
+    document.getElementById("p_allergies").innerText = "Allergies: " + patient.allergies;
+    document.getElementById("p_hospital").innerText = "Hospital: " + patient.previous_hospital;
+    document.getElementById("p_address").innerText = "Address: " + patient.address;
+
+    // PHOTO
+    document.getElementById("p_photo").src =
+        patient.photo ? `/uploads/${patient.photo}` : "/default.png";
+}
+loadProfile();
+</script>
+</body>
+</html>

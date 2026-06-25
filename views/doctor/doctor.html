@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Doctor Dashboard</title>
+  <link rel="stylesheet" href="style1.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Doctor Panel</h2>
+
+  <div class="nav-item" onclick="showSection('patients')">Patients</div>
+  <div class="nav-item" onclick="showSection('stock')">Live Stock</div>
+  <div class="nav-item" onclick="showSection('prescription')">Prescription</div>
+</div>
+
+<div class="main">
+
+  <div class="topbar">
+    <input placeholder="Search patient">
+    <div class="profile">Doctor</div>
+  </div>
+
+  <!-- PATIENTS -->
+  <div id="patients" class="section active">
+    <div class="panel">
+      <h3>Today's Patients</h3>
+      <div id="patientList"></div>
+    </div>
+  </div>
+
+  <!-- STOCK -->
+  <div id="stock" class="section">
+    <div class="panel">
+      <h3>Live Medicine Stock</h3>
+      <div id="stockList"></div>
+    </div>
+  </div>
+
+  <!-- PRESCRIPTION -->
+  <div id="prescription" class="section">
+    <div class="card">
+      <h3>Write Prescription</h3>
+
+      <input id="medName" placeholder="Medicine">
+      <input id="dose" placeholder="Dosage">
+
+      <button class="primary-btn" onclick="createPrescription()">
+        Send
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

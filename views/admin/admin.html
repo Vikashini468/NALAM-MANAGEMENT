@@ -1,0 +1,689 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Admin Dashboard</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
+
+
+body{
+background:#f4f8ff;
+min-height:100vh;
+}
+
+
+/* SIDEBAR */
+
+.sidebar{
+
+position:fixed;
+left:0;
+top:0;
+height:100vh;
+width:250px;
+
+background:linear-gradient(
+135deg,#134f8f,#1a6fc4);
+
+color:white;
+
+padding:25px;
+
+}
+
+
+.sidebar h2{
+margin-bottom:30px;
+}
+
+
+.nav-item{
+
+padding:14px;
+
+background:rgba(255,255,255,0.15);
+
+border-radius:10px;
+
+margin-bottom:12px;
+
+cursor:pointer;
+
+}
+
+
+
+.nav-item:hover{
+
+background:rgba(255,255,255,0.3);
+
+}
+
+
+
+/* MAIN */
+
+.main{
+
+margin-left:250px;
+
+}
+
+
+
+.topbar{
+
+height:70px;
+
+background:white;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:0 30px;
+
+box-shadow:0 4px 15px #ddd;
+
+}
+
+
+
+.profile{
+
+background:#1a6fc4;
+
+color:white;
+
+padding:10px 20px;
+
+border-radius:20px;
+
+}
+
+
+
+/* APPROVAL PAGE */
+
+
+.container{
+
+padding:30px;
+
+}
+
+
+
+.approval-page{
+
+background:white;
+
+padding:25px;
+
+border-radius:15px;
+
+box-shadow:0 5px 20px #ddd;
+
+}
+
+
+
+h2,h3{
+
+color:#1a6fc4;
+
+margin-bottom:15px;
+
+}
+
+
+
+.user-card{
+
+background:#eef4ff;
+
+padding:18px;
+
+margin:15px 0;
+
+border-radius:15px;
+
+cursor:pointer;
+
+border-left:5px solid #1a6fc4;
+
+transition:.3s;
+
+}
+
+
+
+.user-card:hover{
+
+transform:translateY(-5px);
+
+background:#dcecff;
+
+}
+
+
+
+
+
+/* USER DETAILS */
+
+
+.user-page{
+
+display:none;
+
+background:white;
+
+padding:30px;
+
+border-radius:15px;
+
+box-shadow:0 5px 20px #ddd;
+
+}
+
+
+
+.detail-row{
+
+display:grid;
+
+grid-template-columns:200px auto;
+
+padding:12px;
+
+border-bottom:1px solid #ddd;
+
+}
+
+
+
+.btn{
+
+padding:12px 25px;
+
+border:none;
+
+border-radius:10px;
+
+cursor:pointer;
+
+margin:15px 10px 0 0;
+
+font-weight:bold;
+
+}
+
+
+
+.approve{
+
+background:#27ae60;
+
+color:white;
+
+}
+
+
+.reject{
+
+background:#e74c3c;
+
+color:white;
+
+}
+
+
+.back{
+
+background:#1a6fc4;
+
+color:white;
+
+}
+
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="sidebar">
+
+
+<h2 style="color: white;">
+Admin Panel
+</h2>
+
+
+<div class="nav-item">
+User Approval
+</div>
+
+
+<div class="nav-item">
+Purchase Management
+</div>
+
+
+<div class="nav-item">
+Maintenance Management
+</div>
+
+
+<div class="nav-item">
+Medicine Stock
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="main">
+
+
+<div class="topbar">
+
+
+<h2>
+WELCOME admin@system
+</h2>
+
+
+<div class="profile">
+profile
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="container">
+
+
+
+<div class="approval-page" id="approvalPage">
+
+
+<h2>
+Pending User Approvals
+</h2>
+
+
+<div id="userList">
+
+Loading...
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="user-page" id="userPage">
+
+
+<div id="userDetails">
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<script>
+
+
+
+async function loadUsers(){
+
+
+const res =
+await fetch("/admin/pending-users");
+
+
+const users =
+await res.json();
+
+
+
+document.getElementById("userList").innerHTML =
+
+
+users.map(u=>`
+
+
+<div class="user-card"
+onclick="viewUser(${u.id})">
+
+
+<h3>
+${u.name}
+</h3>
+
+
+<p>
+Email : ${u.email}
+</p>
+
+
+<p>
+Role : ${u.role}
+</p>
+
+
+<p>
+Status : ${u.status}
+</p>
+
+
+
+</div>
+
+
+`).join("");
+
+
+
+}
+
+
+
+
+
+
+
+async function viewUser(id){
+
+
+const res =
+await fetch(`/api/user/${id}`);
+
+
+const user =
+await res.json();
+
+
+
+
+document.getElementById("approvalPage")
+.style.display="none";
+
+
+document.getElementById("userPage")
+.style.display="block";
+
+
+
+
+document.getElementById("userDetails")
+.innerHTML=
+
+
+
+`
+
+
+<button class="btn back"
+onclick="backPage()">
+
+← Back
+
+</button>
+
+
+
+<h2>
+User Verification
+</h2>
+
+
+
+<div class="detail-row">
+
+<b>Name</b>
+
+<span>
+${user.name}
+</span>
+
+</div>
+
+
+
+<div class="detail-row">
+
+<b>Email</b>
+
+<span>
+${user.email}
+</span>
+
+</div>
+
+
+
+<div class="detail-row">
+
+<b>Role</b>
+
+<span>
+${user.role}
+</span>
+
+</div>
+
+
+
+
+<div class="detail-row">
+
+<b>Mobile</b>
+
+<span>
+${user.mobile || "-"}
+</span>
+
+</div>
+
+
+
+
+<div class="detail-row">
+
+<b>Address</b>
+
+<span>
+${user.address || "-"}
+</span>
+
+</div>
+
+
+
+
+<div class="detail-row">
+
+<b>Qualification</b>
+
+<span>
+${user.qualification || "-"}
+</span>
+
+</div>
+
+
+
+
+<div class="detail-row">
+
+<b>Certificate</b>
+
+<span>
+${user.certificate || "-"}
+</span>
+
+</div>
+
+
+
+
+<button class="btn approve"
+onclick="approveUser(${user.id})">
+
+Approve
+
+</button>
+
+
+
+
+<button class="btn reject"
+onclick="rejectUser(${user.id})">
+
+Reject
+
+</button>
+
+
+
+`;
+
+
+
+}
+
+
+
+
+
+
+
+function backPage(){
+
+
+document.getElementById("approvalPage")
+.style.display="block";
+
+
+document.getElementById("userPage")
+.style.display="none";
+
+
+}
+
+
+
+
+
+
+
+async function approveUser(id){
+
+
+await fetch(
+`/admin/approve-user/${id}`,
+{
+
+method:"POST"
+
+});
+
+
+alert("User Approved");
+
+
+backPage();
+
+loadUsers();
+
+
+}
+
+
+
+
+
+
+
+async function rejectUser(id){
+
+
+await fetch(
+`/admin/reject-user/${id}`,
+{
+
+method:"DELETE"
+
+});
+
+
+alert("User Rejected");
+
+
+backPage();
+
+loadUsers();
+
+
+}
+
+
+
+
+
+
+loadUsers();
+
+
+
+</script>
+
+
+
+</body>
+
+</html>
