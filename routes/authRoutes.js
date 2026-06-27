@@ -34,7 +34,21 @@ router.post("/register", upload.any(), async (req, res) => {
     const pool = req.app.locals.pool;
 
     try {
-        const { name, email, mobile, password, role } = req.body;
+        const {
+            name,
+            email,
+            mobile,
+            password,
+            role,
+            age,
+            gender,
+            dob,
+            bloodGroup,
+            weight,
+            allergies,
+            previousHospital,
+            address
+        } = req.body;
 
         // validation
         if (!name || !email || !mobile || !password || !role) {
@@ -61,51 +75,58 @@ router.post("/register", upload.any(), async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-        // send EMAIL OTP
         await sendOTP(email, otp);
 
         // insert user
         const userResult = await pool.query(
             `INSERT INTO users
-            (name, username, email, mobile, password, role, otp, otp_expires, verified)
+            (name, username, email, mobile, password, role, otp, otp_expires, verified, approved)
             VALUES
-            ($1,$2,$3,$4,$5,$6,$7,$8,false)
+            ($1,$2,$3,$4,$5,$6,$7,$8,false,false)
             RETURNING id`,
             [name, username, email, mobile, hashedPassword, role, otp, otpExpires]
         );
 
         const userId = userResult.rows[0].id;
-        await pool.query(
-    `UPDATE users SET approved=false WHERE id=$1`,
-    [userId]
-);
 
-        // ROLE TABLES
-        if (role === "admin") {
-    const adminCheck = await pool.query(
-        `SELECT id FROM users WHERE role='admin'`
-    );
+        // uploaded photo
+        const photo =
+            req.files && req.files.length > 0
+                ? req.files[0].filename
+                : null;
 
-    if (adminCheck.rows.length > 0) {
-        return res.status(400).send("Only one admin allowed in system");
-    }
-}
+        // ROLE LOGIC
         if (role === "patient") {
+
             await pool.query(
                 `INSERT INTO patients
-                (user_id, name, age, gender, dob, blood_group, weight, allergies, previous_hospital, address)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+                (
+                    user_id,
+                    name,
+                    age,
+                    gender,
+                    dob,
+                    blood_group,
+                    weight,
+                    allergies,
+                    previous_hospital,
+                    address,
+                    photo
+                )
+                VALUES
+                ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
                 [
                     userId,
                     name,
-                    req.body.age,
-                    req.body.gender,
-                    req.body.dob,
-                    req.body.bloodGroup,
-                    req.body.weight,
-                    req.body.allergies,
-                    req.body.previousHospital,
-                    req.body.address
+                    age,
+                    gender,
+                    dob,
+                    bloodGroup,
+                    weight,
+                    allergies,
+                    previousHospital,
+                    address,
+                    photo
                 ]
             );
         }
@@ -168,14 +189,13 @@ router.post("/register", upload.any(), async (req, res) => {
             );
         }
 
-        res.redirect(`/otp.html?email=${email}`);
+        return res.redirect(`/otp.html?email=${email}`);
 
     } catch (err) {
         console.error(err);
-        res.status(500).send("Registration Failed");
+        return res.status(500).send("Registration Failed");
     }
 });
-
 // -------------------- VERIFY OTP --------------------
 router.post("/verify-otp", async (req, res) => {
     const pool = req.app.locals.pool;

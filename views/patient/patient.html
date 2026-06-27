@@ -11,6 +11,19 @@
   border-radius: 10px;
   font-size: 14px;
 }
+.appointment-card{
+
+background:white;
+
+padding:20px;
+
+margin-top:20px;
+
+border-radius:15px;
+
+box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+}
   </style>
 </head>
 
@@ -18,11 +31,13 @@
 
 <div class="sidebar">
   <h2>Patient Panel</h2>
-   <div class="nav-item" onclick="showProfile()">
-  Profile
+   <div class="nav-item" onclick="showProfile()">Profile</div>
+  <div class="nav-item" onclick="showSection('doctors')">
+    Doctors
 </div>
-  <div class="nav-item">Doctors</div>
-  <div class="nav-item">Appointments</div>
+  <div class="nav-item" onclick="showSection('appointments'); loadAppointments();">
+    Appointments
+</div>
   <div class="nav-item">Prescriptions</div>
   <div class="nav-item">Reports</div>
 </div>
@@ -36,11 +51,11 @@
 
   <div class="section active">
     <div class="card">
-      <h2>Welcome Patient</h2>
+     <h2 id="welcomeText">Welcome</h2>
       <p>Book doctors and view reports here</p>
     </div>
   </div>
-<div id="profileSection" style="display:none; padding:20px;">
+<div id="profileSection" style="display:block; padding:20px;">
     <h2>Patient Profile</h2>
 
     <img id="p_photo" width="120" height="120" style="border-radius:50%;">
@@ -51,7 +66,7 @@
     <p id="p_mobile"></p>
     <p id="p_role"></p>
 
-    <hr>
+    
 
     <p id="p_age"></p>
     <p id="p_gender"></p>
@@ -61,46 +76,481 @@
     <p id="p_hospital"></p>
     <p id="p_address"></p>
 </div>
+<div id="doctors" class="section">
+
+    <h2>Available Doctors</h2>
+
+    <div id="doctorList"></div>
+
+    <br>
+
+    <div id="doctorDetails"></div>
+
+</div>
+<div id="appointments" class="section">
+
+    <h2>My Appointments</h2>
+
+    <div id="appointmentList"></div>
+
+</div>
 </div>
 
 <script src="app.js"></script>
 <script>
+
 const params = new URLSearchParams(window.location.search);
+
 const userId = params.get("id");
 
-function showProfile() {
-    document.getElementById("profileSection").style.display = "block";
-    loadProfile();
+async function loadProfile(){
+
+    try{
+
+        console.log("Loading profile for:", userId);
+
+        const res =
+        await fetch(`/api/patient/profile/${userId}`);
+
+        if(!res.ok){
+
+            throw new Error(
+                "Failed to load profile"
+            );
+
+        }
+
+        const data = await res.json();
+
+        console.log(data);
+
+        const user = data.user;
+
+        const patient = data.patient;
+        document.getElementById("welcomeText").innerText =
+    `Welcome ${user.username}`;
+        document.getElementById("p_name").innerText =
+        "Name: " + (user.name || "-");
+
+        document.getElementById("p_username").innerText =
+        "Username: " + (user.username || "-");
+
+        document.getElementById("p_email").innerText =
+        "Email: " + (user.email || "-");
+
+        document.getElementById("p_mobile").innerText =
+        "Mobile: " + (user.mobile || "-");
+
+        document.getElementById("p_role").innerText =
+        "Role: " + (user.role || "-");
+
+        document.getElementById("p_age").innerText =
+        "Age: " + (patient.age || "-");
+
+        document.getElementById("p_gender").innerText =
+        "Gender: " + (patient.gender || "-");
+
+        document.getElementById("p_blood").innerText =
+        "Blood Group: " + (patient.blood_group || "-");
+
+        document.getElementById("p_weight").innerText =
+        "Weight: " + (patient.weight || "-");
+
+        document.getElementById("p_allergies").innerText =
+        "Allergies: " + (patient.allergies || "-");
+
+        document.getElementById("p_hospital").innerText =
+        "Hospital: " +
+        (patient.previous_hospital || "-");
+
+        document.getElementById("p_address").innerText =
+        "Address: " +
+        (patient.address || "-");
+
+        document.getElementById("p_photo").src =
+        patient.photo
+        ? `/uploads/${patient.photo}`
+        : "/uploads/default.png";
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+        document.getElementById(
+            "profileSection"
+        ).innerHTML =
+        "<h3>Unable to load profile</h3>";
+
+    }
+
 }
 
-async function loadProfile() {
-    const res = await fetch(`/api/patient/profile/${userId}`);
+function showProfile(){
+
+    document.getElementById(
+        "profileSection"
+    ).style.display = "block";
+
+}
+async function loadDoctors() {
+
+    try {
+
+        const res = await fetch("/doctors");
+
+        const doctors = await res.json();
+
+        const doctorList = document.getElementById("doctorList");
+
+        doctorList.innerHTML = "";
+
+        doctors.forEach(d => {
+
+            doctorList.innerHTML += `
+
+            <div class="doctor-card">
+
+                <img
+                    src="${d.photo ? "/uploads/" + d.photo : "/uploads/default.png"}"
+                    class="doctor-photo"
+                >
+
+                <h3>${d.name}</h3>
+
+                <p>${d.specialization || "General"}</p>
+
+                <p>₹${d.consultation_fee || 0}</p>
+
+                <p>⭐ ${d.rating || 0}</p>
+
+                <button
+                    class="view-btn"
+                    onclick="viewDoctor(${d.id})">
+
+                    View Details
+
+                </button>
+
+            </div>
+
+            `;
+
+        });
+
+    }
+
+    catch(err){
+
+        console.log(err);
+
+    }
+
+}
+let currentDoctor = 0;
+
+async function viewDoctor(id){
+
+    currentDoctor = id;
+
+    const res = await fetch(`/doctor/schedule/${id}`);
+
+    const schedule = await res.json();
+
+    document.getElementById("doctorDetails").innerHTML = `
+
+<div class="doctor-details-card">
+
+<h2>${schedule.name}</h2>
+
+<p>
+
+<b>Specialization :</b>
+
+${schedule.specialization}
+
+</p>
+
+<p>
+
+<b>Consultation Fee :</b>
+
+₹${schedule.consultation_fee}
+
+</p>
+
+<hr>
+
+<label>
+
+Available Day
+
+</label>
+
+<br>
+
+<select
+id="daySelect"
+onchange="loadSlots()">
+
+</select>
+
+<br><br>
+
+<label>
+
+Available Time
+
+</label>
+
+<br>
+
+<select id="slotSelect">
+
+</select>
+
+<br><br>
+
+<label>
+
+Appointment Date
+
+</label>
+
+<br>
+
+<input
+type="date"
+id="appointmentDate">
+
+<br><br>
+
+<label>
+
+Symptoms
+
+</label>
+
+<div id="symptoms">
+
+<label><input type="checkbox" value="Fever"> Fever</label><br>
+
+<label><input type="checkbox" value="Cold"> Cold</label><br>
+
+<label><input type="checkbox" value="Headache"> Headache</label><br>
+
+<label><input type="checkbox" value="Diabetes"> Diabetes</label><br>
+
+<label><input type="checkbox" value="Blood Pressure"> Blood Pressure</label><br>
+
+<label><input type="checkbox" value="Skin Allergy"> Skin Allergy</label><br>
+
+<label><input type="checkbox" value="Vomiting"> Vomiting</label>
+
+</div>
+
+<br>
+
+<button
+class="book-btn"
+onclick="bookAppointment()">
+
+Book Appointment
+
+</button>
+
+</div>
+
+`;
+
+    const daySelect = document.getElementById("daySelect");
+
+    daySelect.innerHTML = "";
+
+    schedule.available_days.split(",").forEach(day=>{
+
+        daySelect.innerHTML +=
+
+        `<option value="${day}">
+
+            ${day}
+
+        </option>`;
+
+    });
+
+    loadSlots();
+
+}
+async function loadSlots() {
+
+    const day = document.getElementById("daySelect").value;
+
+    const res =
+    await fetch(`/doctor/slots/${currentDoctor}/${day}`);
+
+    const slots = await res.json();
+
+    const select = document.getElementById("slotSelect");
+
+    select.innerHTML = "";
+
+    slots.forEach(slot => {
+
+        select.innerHTML += `
+
+        <option value="${slot}">
+
+        ${slot}
+
+        </option>
+
+        `;
+
+    });
+
+}
+async function bookAppointment() {
+
+    const appointmentDate =
+    document.getElementById("appointmentDate").value;
+
+    const appointmentDay =
+    document.getElementById("daySelect").value;
+
+    const appointmentTime =
+    document.getElementById("slotSelect").value;
+
+    const symptoms =
+
+    [...document.querySelectorAll("#symptoms input:checked")]
+
+    .map(x => x.value)
+
+    .join(",");
+
+    const res = await fetch(
+
+        "/patient/book-appointment",
+
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            body: JSON.stringify({
+
+                doctorId: currentDoctor,
+
+                patientId: userId,
+
+                appointmentDate,
+
+                appointmentDay,
+
+                appointmentTime,
+
+                symptoms
+
+            })
+
+        }
+
+    );
+
     const data = await res.json();
 
-    const user = data.user;
-    const patient = data.patient;
+    alert(data.message || `Appointment Booked. Token No: ${data.token}`);
 
-    // USER TABLE
-    document.getElementById("p_name").innerText = "Name: " + user.name;
-    document.getElementById("p_username").innerText = "Username: " + user.username;
-    document.getElementById("p_email").innerText = "Email: " + user.email;
-    document.getElementById("p_mobile").innerText = "Mobile: " + user.mobile;
-    document.getElementById("p_role").innerText = "Role: " + user.role;
+}
+function showSection(id){
 
-    // PATIENT TABLE
-    document.getElementById("p_age").innerText = "Age: " + patient.age;
-    document.getElementById("p_gender").innerText = "Gender: " + patient.gender;
-    document.getElementById("p_blood").innerText = "Blood Group: " + patient.blood_group;
-    document.getElementById("p_weight").innerText = "Weight: " + patient.weight;
-    document.getElementById("p_allergies").innerText = "Allergies: " + patient.allergies;
-    document.getElementById("p_hospital").innerText = "Hospital: " + patient.previous_hospital;
-    document.getElementById("p_address").innerText = "Address: " + patient.address;
+    document.getElementById("profileSection").style.display="none";
 
-    // PHOTO
-    document.getElementById("p_photo").src =
-        patient.photo ? `/uploads/${patient.photo}` : "/default.png";
+    document.querySelectorAll(".section").forEach(sec=>{
+
+        sec.classList.remove("active");
+
+    });
+
+    document.getElementById(id).classList.add("active");
+
+}
+
+async function loadAppointments() {
+
+    try {
+
+        const res = await fetch(`/patient/appointments/${userId}`);
+        const appointments = await res.json();
+
+        const list = document.getElementById("appointmentList");
+        list.innerHTML = "";
+
+        if (!appointments || appointments.length === 0) {
+            list.innerHTML = `<h3>No appointments booked.</h3>`;
+            return;
+        }
+
+        appointments.forEach((a, index) => {
+
+            const token = a.token_no || index + 1;
+
+            // waiting time logic
+            const avgSlotTime = 15; // minutes per patient
+            const waitingMinutes = (token - 1) * avgSlotTime;
+
+            list.innerHTML += `
+                <div class="appointment-card">
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>${a.doctor_name}</h3>
+                        <span style="
+                            background:#1976d2;
+                            color:white;
+                            padding:5px 12px;
+                            border-radius:20px;
+                            font-size:13px;
+                        ">
+                            Token #${token}
+                        </span>
+                    </div>
+
+                    <hr>
+
+                    <p><b>Date:</b> ${a.appointment_date}</p>
+                    <p><b>Time:</b> ${a.appointment_time}</p>
+                    <p><b>Status:</b> ${a.status}</p>
+                    <p><b>Symptoms:</b> ${a.symptoms}</p>
+
+                    <div style="
+                        margin-top:12px;
+                        padding:10px;
+                        background:#f4f8ff;
+                        border-radius:10px;
+                        font-weight:600;
+                        color:#1565c0;
+                    ">
+                        ⏳ Estimated Waiting Time: ${waitingMinutes} minutes
+                    </div>
+
+                </div>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
 }
 loadProfile();
+loadDoctors();
+loadAppointments();
 </script>
 </body>
 </html>

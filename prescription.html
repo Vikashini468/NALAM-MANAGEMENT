@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Medical Research Window</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #eef2ff, #f8fafc);
+}
+
+/* CENTER BOX (MAIN FIX) */
+.box {
+    width: 400px;
+    margin: 60px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* TITLE */
+h3 {
+    color: #1e3a8a;
+}
+
+/* INPUT */
+input {
+    width: 90%;   /* centered */
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+}
+
+input:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+
+/* BUTTON */
+button {
+    width: 90%;   /* centered */
+    padding: 12px;
+    margin-top: 15px;
+    background: linear-gradient(to right, #1e3a8a, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #f97316;
+}
+
+/* PREVIEW */
+#previewBox {
+    margin-top: 15px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    text-align: left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h3>Prescription window</h3>
+
+    <!-- <input type="text" id="search" placeholder="Search Medicine"> -->
+     <input type="text" id="search" list="medicineList" placeholder="Search Medicine">
+     <datalist id="medicineList"></datalist>
+
+     <input type="text" id="type" placeholder="Type" readonly>
+     <input type="text" id="power" placeholder="Composition" readonly>
+     <input type="text" id="rate" placeholder="Price" readonly>
+     <input type="number" id="quantity" placeholder="Quantity">
+    <input type="number" id="days" placeholder="Enter Days">
+
+    <button onclick="previewData()">Submit</button>
+
+    <div id="previewBox"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+
+const patientId = params.get("patientId");
+const doctorId = params.get("doctorId");
+const appointmentId = params.get("appointmentId");
+console.log("patientId =", patientId);
+console.log("doctorId =", doctorId);
+console.log("appointmentId =", appointmentId);
+// const params = new URLSearchParams(window.location.search);
+// const doctorId = params.get("doctorId");
+function previewData() {
+
+    let name = document.getElementById("search").value;
+    let type = document.getElementById("type").value;
+    let power = document.getElementById("power").value;
+    let rate = document.getElementById("rate").value;
+    let quantity = document.getElementById("quantity").value;
+    let days = document.getElementById("days").value;
+
+    if (!name || !type || !power || !rate || !quantity || !days) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    let today = new Date();
+    let end = new Date();
+    end.setDate(today.getDate() + parseInt(days));
+
+    document.getElementById("previewBox").innerHTML = `
+        <h3>Prescription Preview</h3>
+        <p><b>Medicine:</b> ${name}</p>
+        <p><b>Type:</b> ${type}</p>
+        <p><b>Power:</b> ${power}</p>
+        <p><b>Rate:</b> ${rate}</p>
+        <p><b>Quantity:</b> ${quantity}</p>
+        <p><b>Days:</b> ${days}</p>
+        <p><b>Start:</b> ${today.toDateString()}</p>
+        <p><b>End:</b> ${end.toDateString()}</p>
+
+        <button onclick="verifyPrescription()">Verify</button>
+    `;
+}
+let medicines = [];
+
+Papa.parse("medicine.csv", {
+    download: true,
+    header: true,
+    complete: function(results) {
+
+        medicines = results.data;
+
+        medicines.forEach(med => {
+            let option = document.createElement("option");
+            option.value = med.name;
+            document.getElementById("medicineList").appendChild(option);
+        });
+    }
+});
+document.getElementById("search").addEventListener("change", function() {
+
+    let med = medicines.find(
+        m => m.name.toLowerCase() === this.value.toLowerCase()
+    );
+
+    if(med){
+        document.getElementById("type").value = med.type;
+        document.getElementById("power").value =
+            med.short_composition1 + " " + med.short_composition2;
+        document.getElementById("rate").value = "₹" + med.price;
+    }
+});
+async function verifyPrescription() {
+
+    try {
+
+        const patientRes = await fetch(`/patient/details/${patientId}`);
+        const patient = await patientRes.json();
+
+        const doctorRes = await fetch(`/doctor/profile/${doctorId}`);
+        const doctor = await doctorRes.json();
+
+        console.log("Patient object:", patient);
+        console.log("Doctor object:", doctor);
+
+        const prescription = {
+    patientId,
+    doctorId,
+    appointmentId,
+    patientName: patient.name,
+    doctorName: doctor.name,
+
+    medicines: [{
+        name: document.getElementById("search").value,
+        type: document.getElementById("type").value,
+        composition: document.getElementById("power").value,
+        price: parseFloat(document.getElementById("rate").value.replace("₹","")),
+        quantity: parseInt(document.getElementById("quantity").value),
+        days: document.getElementById("days").value
+    }]
+};
+       const medicineName = document.getElementById("search").value;
+const quantity = document.getElementById("quantity").value;
+
+// deduct stock in real-time
+await fetch("/medicine/deduct-stock", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        name: medicineName,
+        quantity: parseInt(quantity)
+    })
+});
+
+        console.log(prescription);
+
+        await fetch("/pharmacy/prescriptions",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(prescription)
+        });
+
+        await fetch(`/patients/complete/${appointmentId}`,{
+            method:"POST"
+        });
+
+        window.location.href=`doctor.html?id=${doctorId}`;
+
+    }
+    catch(err){
+        console.error(err);
+    }
+}
+</script>
+
+</body>
+</html>

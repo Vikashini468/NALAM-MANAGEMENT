@@ -4,6 +4,114 @@
 <head>
   <title>Doctor Dashboard</title>
   <link rel="stylesheet" href="style1.css">
+  <style>
+  /* =========================
+   GLOBAL LAYOUT FIX
+========================= */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+}
+
+/* Sidebar fixed */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    height: 100vh;
+    background: linear-gradient(180deg, #0d47a1, #1565c0);
+    color: white;
+    padding: 20px;
+}
+
+/* MAIN AREA FIX */
+.main {
+    margin-left: 220px;
+    padding: 20px;
+    width: calc(100% - 220px);
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* TOP BAR */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+/* =========================
+   PATIENT SECTION FIX
+========================= */
+
+.panel {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 80vh;   /* 👈 IMPORTANT: expands full space */
+}
+
+/* GRID FIX FOR APPOINTMENTS */
+#patientList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 25px;
+    margin-top: 15px;
+}
+
+/* CARD FIX */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    border: 1px solid #eef2f7;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* TITLE FIX */
+.card h3 {
+    color: #1565c0;
+    margin-bottom: 8px;
+}
+
+/* TEXT FIX (important for visibility) */
+.card p {
+    color: #333;
+    font-size: 15px;
+    margin: 5px 0;
+}
+
+/* BUTTON FULL WIDTH */
+.card button {
+    margin-top: 12px;
+    width: 100%;
+}
+
+/* =========================
+   SECTION FIX (IMPORTANT)
+========================= */
+
+.section {
+    display: none;
+    width: 100%;
+}
+
+.section.active {
+    display: block;
+}
+  </style>
 </head>
 
 <body>
@@ -11,9 +119,24 @@
 <div class="sidebar">
   <h2>Doctor Panel</h2>
 
-  <div class="nav-item" onclick="showSection('patients')">Patients</div>
-  <div class="nav-item" onclick="showSection('stock')">Live Stock</div>
-  <div class="nav-item" onclick="showSection('prescription')">Prescription</div>
+  <div class="nav-item" onclick="showSection('patients')">
+    Patients
+</div>
+
+<div class="nav-item" onclick="showSection('schedule')">
+    Schedule
+</div>
+
+<div class="nav-item" onclick="showSection('stock')">
+    Live Stock
+</div>
+
+<div class="nav-item" onclick="showSection('prescription')">
+    Prescription
+</div>
+<div class="nav-item" onclick="showSection('savedSchedule')">
+    Saved Schedule
+</div>
 </div>
 
 <div class="main">
@@ -30,15 +153,116 @@
       <div id="patientList"></div>
     </div>
   </div>
+  <!-- SCHEDULE -->
 
+<div id="schedule" class="section">
+
+    <h2>Doctor Schedule & Profile</h2>
+
+    <div class="card">
+
+        <h3>Available Days</h3>
+
+        <div style="display:grid;
+                    grid-template-columns:repeat(3,1fr);
+                    gap:10px;">
+
+            <label class="day-box"><input type="checkbox" class="dayCheck" value="Monday"><span style="color: black;">Monday</span></label>
+
+            <label class="day-box"><input type="checkbox" class="dayCheck" value="Tuesday"><span style="color: black;">Tuesday</span> </label>
+
+            <label class="day-box"><input type="checkbox" class="dayCheck" value="Wednesday"><span style="color: black;">Wednesday</span> </label>
+
+            <label class="day-box"><input type="checkbox" class="dayCheck" value="Thursday"><span style="color: black;">Thursday</span> </label>
+
+            <label class="day-box"><input type="checkbox" class="dayCheck" value="Friday"> <span style="color: black;">Friday</span></label>
+
+            <label class="day-box"><input type="checkbox" class="dayCheck" value="Saturday"> <span style="color: black;">Saturday</span></label>
+
+            <label class="day-box"><input type="checkbox" class="dayCheck" value="Sunday"><span style="color: black;">Sunday</span></label>
+
+        </div>
+
+        <br>
+
+        <label style="color: black;">Start Time</label>
+
+        <input type="time" id="startTime">
+
+        <br><br>
+
+        <label  style="color: black;">End Time</label>
+
+        <input type="time" id="endTime">
+
+        <br><br>
+
+        <label style="color: black;">Maximum Tokens</label>
+
+        <input
+            type="number"
+            id="maxTokens"
+            placeholder="25">
+
+        <br><br>
+
+        <label style="color: black;">Consultation Fee</label>
+
+        <input
+            type="number"
+            id="consultationFee">
+
+        <br><br>
+
+        <label style="color: black;">Languages</label>
+
+        <input
+            type="text"
+            id="languages"
+            placeholder="English, Tamil">
+
+        <br><br>
+
+        <label style="color: black;">Doctor Bio</label>
+
+        <textarea
+            id="bio"
+            rows="5"
+            style="width:100%;"></textarea>
+
+        <br><br>
+
+        <button class="primary-btn"
+                onclick="saveProfile()">
+
+            Save Profile
+
+        </button>
+
+        <button class="primary-btn"
+                onclick="saveSchedule()">
+
+            Save Schedule
+
+        </button>
+
+    </div>
+
+</div>
   <!-- STOCK -->
   <div id="stock" class="section">
     <div class="panel">
-      <h3>Live Medicine Stock</h3>
-      <div id="stockList"></div>
+        <h3>Live Medicine Stock</h3>
+        <div id="stockList"></div>
     </div>
-  </div>
+</div>
+<div id="consultation" class="section">
+    <div class="panel">
+        <h2>Consultation</h2>
 
+        <div id="consultationDetails"></div>
+    </div>
+</div>
   <!-- PRESCRIPTION -->
   <div id="prescription" class="section">
     <div class="card">
@@ -52,9 +276,266 @@
       </button>
     </div>
   </div>
+  <div id="savedSchedule" class="section">
+
+    <div class="card">
+
+        <h2>Saved Schedule</h2>
+
+        <div id="savedScheduleCard">
+
+            Loading...
+
+        </div>
+
+    </div>
+
+</div>
 
 </div>
 
 <script src="app.js"></script>
+<script>
+function showSection(id) {
+    document.querySelectorAll(".section").forEach(sec => {
+        sec.classList.remove("active");
+    });
+    document.getElementById(id).classList.add("active");
+}
+
+/* =========================
+   SAVE SCHEDULE
+========================= */
+async function saveSchedule() {
+
+    const doctorId = new URLSearchParams(window.location.search).get("id");
+
+    const days = [...document.querySelectorAll(".dayCheck:checked")]
+        .map(d => d.value);
+
+    const payload = {
+        doctorId,
+        availableDays: days.join(","),
+        startTime: document.getElementById("startTime").value,
+        endTime: document.getElementById("endTime").value,
+        maxTokens: document.getElementById("maxTokens").value,
+        consultationFee: document.getElementById("consultationFee").value,
+        languages: document.getElementById("languages").value,
+        bio: document.getElementById("bio").value
+    };
+
+    const res = await fetch("/doctor/save-schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+        alert("Schedule saved successfully");
+        await loadSchedule();
+        showSection("savedSchedule");
+    } else {
+        alert(result.message || "Failed to save schedule");
+    }
+}
+
+/* =========================
+   LOAD SCHEDULE
+========================= */
+async function loadSchedule() {
+
+    const doctorId = new URLSearchParams(window.location.search).get("id");
+
+    const res = await fetch(`/doctor/schedule/${doctorId}`);
+    const data = await res.json();
+
+    const card = document.getElementById("savedScheduleCard");
+
+    if (!data || Object.keys(data).length === 0) {
+        card.innerHTML = `
+            <h3>No Schedule Found</h3>
+            <p>Please create your schedule first.</p>
+        `;
+        return;
+    }
+
+    card.innerHTML = `
+        <h3>Doctor Schedule</h3>
+        <p><b>Available Days:</b> ${data.available_days || "-"}</p>
+        <p><b>Time:</b> ${data.start_time || "-"} - ${data.end_time || "-"}</p>
+        <p><b>Max Tokens:</b> ${data.max_tokens || "-"}</p>
+        <p><b>Fee:</b> ₹${data.consultation_fee || "-"}</p>
+        <p><b>Languages:</b> ${data.languages || "-"}</p>
+        <p><b>Bio:</b> ${data.bio || "-"}</p>
+
+        <br>
+        <button class="primary-btn" onclick="editSchedule()">
+            Edit Schedule
+        </button>
+    `;
+}
+
+/* =========================
+   EDIT SCHEDULE
+========================= */
+async function editSchedule() {
+
+    const doctorId = new URLSearchParams(window.location.search).get("id");
+
+    const res = await fetch(`/doctor/schedule/${doctorId}`);
+    const data = await res.json();
+
+    if (!data || Object.keys(data).length === 0) {
+        alert("No schedule found to edit");
+        return;
+    }
+
+    showSection("schedule");
+
+    document.getElementById("startTime").value = data.start_time || "";
+    document.getElementById("endTime").value = data.end_time || "";
+    document.getElementById("maxTokens").value = data.max_tokens || "";
+    document.getElementById("consultationFee").value = data.consultation_fee || "";
+    document.getElementById("languages").value = data.languages || "";
+    document.getElementById("bio").value = data.bio || "";
+
+    // reset checkboxes
+    document.querySelectorAll(".dayCheck").forEach(cb => cb.checked = false);
+
+    if (data.available_days) {
+        const days = data.available_days.split(",").map(d => d.trim());
+
+        document.querySelectorAll(".dayCheck").forEach(cb => {
+            if (days.includes(cb.value)) {
+                cb.checked = true;
+            }
+        });
+    }
+}
+
+/* =========================
+   LOAD APPOINTMENTS
+========================= */
+async function loadAppointments() {
+
+    const doctorId = new URLSearchParams(location.search).get("id");
+
+    const res = await fetch(`/doctor/appointments/${doctorId}`);
+    const appointments = await res.json();
+
+    const list = document.getElementById("patientList");
+    list.innerHTML = "";
+
+    if (!appointments || appointments.length === 0) {
+        list.innerHTML = `<h3>No Appointments Today</h3>`;
+        return;
+    }
+
+    appointments.forEach(a => {
+
+        list.innerHTML += `
+        <div class="card">
+
+            <h3>${a.patient_name || "Unknown Patient"}</h3>
+            <hr>
+
+            <p><b>Token:</b> ${a.token_no ?? "-"}</p>
+            <p><b>Date:</b> ${a.appointment_date ?? "-"}</p>
+            <p><b>Time:</b> ${a.appointment_time ?? "-"}</p>
+
+            <p><b>Age:</b> ${a.age ?? "-"}</p>
+            <p><b>Gender:</b> ${a.gender ?? "-"}</p>
+            <p><b>Blood Group:</b> ${a.blood_group ?? "-"}</p>
+
+            <p><b>Symptoms:</b> ${a.symptoms ?? "-"}</p>
+            <p><b>Status:</b> ${a.status ?? "-"}</p>
+
+            <button
+onclick="console.log('clicked', ${a.id}); startConsultation(${a.id})">
+Start Consultation
+</button>
+
+        </div>
+        `;
+    });
+}
+let medicineStock = [];
+
+async function loadStock() {
+
+    const res = await fetch("/medicines");
+    const medicines = await res.json();
+
+    const stockList = document.getElementById("stockList");
+    stockList.innerHTML = "";
+
+    medicines.forEach(m => {
+
+        stockList.innerHTML += `
+            <div class="card">
+                <h3>${m.name}</h3>
+                <p><b>Type:</b> ${m.type}</p>
+                <p><b>Stock:</b> ${m.stock_quantity}</p>
+
+                <div style="background:#eee;height:10px;border-radius:5px;">
+                    <div style="
+                        width:${Math.min(m.stock_quantity,100)}%;
+                        height:100%;
+                        background:${m.stock_quantity < 10 ? 'red' : 'green'};
+                        border-radius:5px;
+                    "></div>
+                </div>
+            </div>
+        `;
+    });
+}
+async function startConsultation(appointmentId) {
+
+    const doctorId = new URLSearchParams(window.location.search).get("id");
+
+    try {
+
+        // 1. mark appointment as InProgress
+        await fetch(`/appointment/start/${appointmentId}`, {
+            method: "POST"
+        });
+
+        // 2. fetch full patient details
+        const res = await fetch(`/appointment/details/${appointmentId}`);
+        const data = await res.json();
+
+        // 3. show consultation section
+        document.getElementById("consultationDetails").innerHTML = `
+            <h3>${data.patient_name}</h3>
+            <p><b>Age:</b> ${data.age}</p>
+            <p><b>Gender:</b> ${data.gender}</p>
+            <p><b>Blood Group:</b> ${data.blood_group}</p>
+            <p><b>Symptoms:</b> ${data.symptoms}</p>
+        `;
+
+        showSection("consultation");
+
+    } catch (err) {
+        console.error("Start consultation error:", err);
+    }
+}
+/* =========================
+   INIT
+========================= */
+window.onload = function () {
+    console.log("Dashboard loaded");
+
+    try {
+        loadSchedule();
+        loadAppointments();
+        loadStock();
+    } catch (err) {
+        console.error("Init error:", err);
+    }
+};
+</script>
+
 </body>
 </html>

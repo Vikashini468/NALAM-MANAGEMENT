@@ -1,99 +1,292 @@
-router.get("/api/patient/profile/:email", async (req, res) => {
-    const pool = req.app.locals.pool;
+const express = require("express");
+const router = express.Router();
 
-    try {
-        const { email } = req.params;
+/* =====================================================
+   PATIENT PROFILE
+===================================================== */
 
-        // 1. get user
-        const userResult = await pool.query(
-            `SELECT id, name, username, email, mobile, role
-             FROM users WHERE email=$1`,
-            [id]
-        );
-
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        const user = userResult.rows[0];
-
-        // 2. get patient details
-        const patientResult = await pool.query(
-            `SELECT * FROM patients WHERE user_id=$1`,
-            [id]
-        );
-
-        const patient = patientResult.rows[0] || {};
-
-        res.json({
-            user,
-            patient
-        });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error" });
-    }
-});
 router.get("/api/patient/profile/:id", async (req, res) => {
+
     const pool = req.app.locals.pool;
 
     try {
-        const userId = req.params.id;
 
         const result = await pool.query(
             `
-            SELECT 
+            SELECT
                 u.id,
                 u.name,
                 u.username,
                 u.email,
                 u.mobile,
                 u.role,
-                p.age,
-                p.gender,
-                p.blood_group,
+
+                COALESCE(p.age, u.age) as age,
+                COALESCE(p.gender, u.gender) as gender,
+                COALESCE(p.blood_group, 'Not Provided') as blood_group,
                 p.weight,
                 p.allergies,
                 p.previous_hospital,
                 p.address,
                 p.photo
+
             FROM users u
-            LEFT JOIN patients p ON u.id = p.user_id
-            WHERE u.id = $1
+
+            LEFT JOIN patients p
+            ON u.id = p.user_id
+
+            WHERE u.id=$1
             `,
-            [userId]
+            [req.params.id]
         );
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "User not found" });
+        if(result.rows.length===0){
+
+            return res.status(404).json({
+                error:"Patient not found"
+            });
+
         }
 
-        const row = result.rows[0];
+        const row=result.rows[0];
 
         res.json({
-            user: {
-                id: row.id,
-                name: row.name,
-                username: row.username,
-                email: row.email,
-                mobile: row.mobile,
-                role: row.role
+
+            user:{
+                id:row.id,
+                name:row.name,
+                username:row.username,
+                email:row.email,
+                mobile:row.mobile,
+                role:row.role
             },
-            patient: {
-                age: row.age,
-                gender: row.gender,
-                blood_group: row.blood_group,
-                weight: row.weight,
-                allergies: row.allergies,
-                previous_hospital: row.previous_hospital,
-                address: row.address,
-                photo: row.photo
+
+            patient:{
+                age:row.age,
+                gender:row.gender,
+                blood_group:row.blood_group,
+                weight:row.weight,
+                allergies:row.allergies,
+                previous_hospital:row.previous_hospital,
+                address:row.address,
+                photo:row.photo
             }
+
         });
 
+    }
+
+    catch(err){
+
+        console.log(err);
+
+        res.status(500).json({
+            error:"Server Error"
+        });
+
+    }
+
+});
+
+
+/* =====================================================
+   BOOK APPOINTMENT
+===================================================== */
+
+router.post("/patient/book-appointment", async (req,res)=>{
+
+    const pool=req.app.locals.pool;
+
+    try{
+
+        const{
+
+            doctorId,
+            patientId,
+            appointmentDate,
+            appointmentTime,
+            symptoms
+
+        }=req.body;
+
+
+        /* validation */
+
+        if(
+            !doctorId ||
+            !patientId ||
+            !appointmentDate ||
+            !appointmentTime
+        ){
+
+            return res.status(400).json({
+
+                success:false,
+                message:"Missing required fields"
+
+            });
+
+        }
+
+
+        /* Generate next token */
+
+        /* Check whether this time slot is already booked */
+
+const slotCheck = await pool.query(
+
+    `
+    SELECT id
+    FROM appointments
+    WHERE doctor_id = $1
+    AND appointment_date = $2
+    AND appointment_time = $3
+    `,
+
+    [
+        doctorId,
+        appointmentDate,
+        appointmentTime
+    ]
+
+);
+
+if (slotCheck.rows.length > 0) {
+
+    return res.status(400).json({
+
+        success: false,
+        message: "This time slot is already booked."
+
+    });
+
+}
+
+
+/* Generate next token */
+
+const tokenResult = await pool.query(`
+    SELECT COALESCE(MAX(token_no), 0) + 1 AS token
+    FROM appointments
+    WHERE doctor_id = $1
+    AND appointment_date = CURRENT_DATE
+`, [doctorId]);
+const tokenNo = tokenResult.rows[0].token;
+
+await pool.query(`
+    INSERT INTO appointments
+    (
+        doctor_id,
+        patient_id,
+        appointment_date,
+        appointment_time,
+        token_no,
+        status,
+        symptoms
+    )
+    VALUES ($1,$2,CURRENT_DATE,$3,$4,'Waiting',$5)
+`, [
+    doctorId,
+    patientId,
+    appointmentTime,
+    tokenNo,
+    symptoms
+]);
+        
+
+        res.json({
+
+            success:true,
+            token:tokenNo
+
+        });
+
+    }
+
+    catch(err){
+
+        console.log(err);
+
+        res.status(500).json({
+
+            success:false,
+            message:"Unable to book appointment"
+
+        });
+
+    }
+
+});
+
+
+/* =====================================================
+   MY APPOINTMENTS
+===================================================== */
+
+router.get("/doctor/appointments/:id", async (req, res) => {
+  const pool = req.app.locals.pool;
+
+  try {
+    const result = await pool.query(`
+    SELECT
+        a.id,
+        a.patient_id,
+        a.doctor_id,
+        a.appointment_date,
+        a.appointment_time,
+        a.token_no,
+        a.status,
+        a.symptoms,
+
+        u.name AS patient_name,
+
+        p.age,
+        p.gender,
+        p.blood_group
+
+    FROM appointments a
+
+    JOIN users u ON u.id = a.patient_id
+    LEFT JOIN patients p ON p.user_id = a.patient_id
+
+    WHERE a.doctor_id = $1
+
+    ORDER BY a.appointment_date ASC, a.appointment_time ASC
+`, [req.params.id]);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server Error");
+  }
+});
+router.get("/patient/appointments/:id", async (req, res) => {
+    const pool = req.app.locals.pool;
+
+    try {
+        const result = await pool.query(`
+            SELECT
+                a.id,
+                a.doctor_id,
+                a.patient_id,
+                a.appointment_date,
+                a.appointment_time,
+                a.token_no,
+                a.status,
+                a.symptoms,
+                u.name AS doctor_name
+            FROM appointments a
+            JOIN users u ON u.id = a.doctor_id
+            WHERE a.patient_id = $1
+            ORDER BY a.appointment_date DESC, a.appointment_time DESC
+        `, [req.params.id]);
+
+        res.json(result.rows);
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error" });
+        console.log(err);
+        res.status(500).json({ error: "Server Error" });
     }
 });
+module.exports = router;
