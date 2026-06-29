@@ -222,108 +222,63 @@ async function verifyPrescription() {
     try {
 
         const patientRes = await fetch(`/patient/details/${patientId}`);
+        if (!patientRes.ok) throw new Error("Failed to load patient details");
         const patient = await patientRes.json();
 
         const doctorRes = await fetch(`/doctor/profile/${doctorId}`);
+        if (!doctorRes.ok) throw new Error("Failed to load doctor details");
         const doctor = await doctorRes.json();
 
         const prescription = {
-
             patientId,
             doctorId,
             appointmentId,
-
             patientName: patient.name,
             doctorName: doctor.name,
-
             medicines: [
-
                 {
-
                     name: document.getElementById("search").value,
-
                     type: document.getElementById("type").value,
-
                     composition: document.getElementById("power").value,
-
-                    price: parseFloat(
-                        document
-                            .getElementById("rate")
-                            .value.replace("₹", "")
-                    ),
-
-                    quantity: parseInt(
-                        document.getElementById("quantity").value
-                    ),
-
-                    days: parseInt(
-                        document.getElementById("days").value
-                    )
-
+                    price: parseFloat(document.getElementById("rate").value.replace("₹", "")),
+                    quantity: parseInt(document.getElementById("quantity").value),
+                    days: parseInt(document.getElementById("days").value)
                 }
-
             ]
-
         };
 
         /* Deduct Stock */
-
         await fetch("/medicine/deduct-stock", {
-
             method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-
                 name: document.getElementById("search").value,
-
-                quantity: parseInt(
-                    document.getElementById("quantity").value
-                )
-
+                quantity: parseInt(document.getElementById("quantity").value)
             })
-
         });
 
         /* Save Prescription */
-
-        await fetch("/pharmacy/prescriptions", {
-
+        const saveRes = await fetch("/pharmacy/prescriptions", {
             method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(prescription)
-
         });
 
-        /* Complete Appointment */
+        if (!saveRes.ok) throw new Error("Failed to save prescription");
 
-        await fetch(`/appointment/complete/${appointmentId}`, {
-
-            method: "POST"
-
-        });
+        /* Complete Appointment only if NOT from lab report flow */
+        const fromLab = new URLSearchParams(window.location.search).get("fromLab");
+        if (!fromLab) {
+            await fetch(`/appointment/complete/${appointmentId}`, { method: "POST" });
+        }
 
         alert("Prescription Saved Successfully");
+        window.close();
 
-        window.location.href = `/doctor?id=${doctorId}`;;
-
-    }
-
-    catch (err) {
-
+    } catch (err) {
         console.error(err);
-
-        alert("Failed to save prescription.");
-
+        alert("Failed to save prescription: " + err.message);
     }
-
 }
 
 </script>

@@ -346,23 +346,36 @@
 
         <!-- ================= LAB REPORTS ================= -->
         <div id="labReports" class="section">
-
             <div class="panel">
+                <h3 style="color:#0d47a1;margin-bottom:20px;">⏳ Waiting for Lab Reports</h3>
+                <div id="waitingLab" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;"></div>
 
-                <h3>Waiting For Lab Reports</h3>
+                <hr style="margin:30px 0;border:none;border-top:2px solid #e3eaf5;">
 
-                <div id="waitingLab"></div>
-
-                <br>
-                <hr>
-                <br>
-
-                <h3>Lab Reports Ready</h3>
-
+                <h3 style="color:#1b5e20;margin-bottom:20px;">✅ Lab Reports Ready</h3>
                 <div id="completedLab"></div>
 
-            </div>
+                <!-- EXPANDED DETAIL PANEL -->
+                <div id="labDetailPanel" style="display:none;margin-top:20px;background:#f8fbff;border-radius:12px;padding:24px;border:1px solid #d0e4ff;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h3 id="labDetailName" style="color:#0d47a1;"></h3>
+                        <button onclick="closeLabDetail()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+                    </div>
+                    <p id="labDetailTests" style="margin-bottom:16px;color:#555;"></p>
+                    <a id="labDetailPdf" href="#" target="_blank"
+                       style="display:inline-block;padding:10px 20px;background:#0d47a1;color:white;border-radius:8px;text-decoration:none;margin-bottom:20px;">
+                        📄 View / Download Report
+                    </a>
 
+                    <hr style="margin:16px 0;">
+                    <h4 style="color:#0d47a1;margin-bottom:12px;">💊 Prescription (optional)</h4>
+                    <button onclick="openPrescription()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">📋 Open Prescription Window</button>
+
+                    <div style="margin-top:20px;">
+                        <button onclick="confirmLabReport()" style="padding:10px 24px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">✅ Confirm & Complete</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -553,12 +566,12 @@ async function startConsultation(appointmentId) {
                 <div style="margin-top:20px;display:flex;gap:15px;">
 
                     <button class="primary-btn"
-                        onclick="window.location.href='prescription.html?appointmentId=${appointmentId}&patientId=${data.patient_id}&doctorId=${doctorId}'">
+                        onclick="window.location.href='/prescription.html?appointmentId=${appointmentId}&patientId=${data.patient_id}&doctorId=${doctorId}'">
                         💊 Medicine
                     </button>
 
                     <button class="primary-btn"
-onclick="window.location.href='lab_selection.html?appointmentId=${appointmentId}&patientId=${data.patient_id}&doctorId=${doctorId}'">
+onclick="window.location.href='/lab_selection.html?appointmentId=${appointmentId}&patientId=${data.patient_id}&doctorId=${doctorId}'">
 🧪 Lab Test
 </button>
 
@@ -573,73 +586,92 @@ onclick="window.location.href='lab_selection.html?appointmentId=${appointmentId}
         console.error(err);
     }
 }
-async function loadWaitingLab(){
-
-const res=await fetch(`/doctor/labwaiting/${doctorId}`);
-
-const data=await res.json();
-
-let html="";
-
-data.forEach(item=>{
-
-html+=`
-
-<div class="appointment-card">
-
-<h3>${item.name}</h3>
-
-<p>Status : ${item.status}</p>
-
-<p>Tests :</p>
-
-<ul>
-
-${item.tests.map(t=>`<li>${t}</li>`).join("")}
-
-</ul>
-
-</div>
-
-`;
-
-});
-
-document.getElementById("waitingLab").innerHTML=html;
-
+async function loadWaitingLab() {
+    try {
+        const res = await fetch(`/doctor/labwaiting/${doctorId}`);
+        const data = await res.json();
+        const el = document.getElementById("waitingLab");
+        if (!data.length) { el.innerHTML = `<p style="color:#888;">No patients waiting for lab reports.</p>`; return; }
+        el.innerHTML = data.map(item => {
+            let tests = [];
+            try { tests = typeof item.tests === "string" ? JSON.parse(item.tests) : item.tests; } catch(e) {}
+            return `
+            <div class="d-card" style="border-left:4px solid #f59e0b;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;font-size:18px;">⏳</div>
+                    <div>
+                        <h3 style="color:#0d47a1;font-size:15px;">${item.name}</h3>
+                        <span style="font-size:12px;background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;">Waiting</span>
+                    </div>
+                </div>
+                <p style="font-size:13px;color:#555;margin-bottom:6px;"><b>Tests Ordered:</b></p>
+                <ul style="padding-left:18px;">${tests.map(t => `<li style="font-size:13px;color:#333;margin:3px 0;">${t}</li>`).join("")}</ul>
+            </div>`;
+        }).join("");
+    } catch(err) { console.error(err); }
 }
-async function loadCompletedLab(){
 
-const res=await fetch(`/doctor/labcompleted/${doctorId}`);
+let currentLabAppointmentId = null;
+let currentLabPatientId = null;
 
-const data=await res.json();
+async function loadCompletedLab() {
+    try {
+        const res = await fetch(`/doctor/labcompleted/${doctorId}`);
+        const data = await res.json();
+        const el = document.getElementById("completedLab");
+        if (!data.length) { el.innerHTML = `<p style="color:#888;">No completed lab reports yet.</p>`; return; }
+        el.innerHTML = data.map(item => `
+            <div onclick="openLabDetail(${item.id}, ${item.patient_id}, '${item.name}', ${JSON.stringify(item.tests).replace(/"/g,'&quot;')}, '${item.report_file}')"
+                 style="display:flex;align-items:center;justify-content:space-between;
+                        background:white;border:1px solid #c8e6c9;border-left:4px solid #22c55e;
+                        border-radius:10px;padding:14px 20px;margin-bottom:10px;cursor:pointer;
+                        transition:background 0.2s;" onmouseover="this.style.background='#f0fff4'" onmouseout="this.style.background='white'">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;">✅</div>
+                    <span style="font-weight:600;color:#0d47a1;font-size:15px;">${item.name}</span>
+                </div>
+                <span style="font-size:12px;color:#555;">▶ View Report</span>
+            </div>`).join("");
+    } catch(err) { console.error(err); }
+}
 
-let html="";
+function openLabDetail(appointmentId, patientId, name, tests, reportFile) {
+    currentLabAppointmentId = appointmentId;
+    currentLabPatientId = patientId;
+    document.getElementById("labDetailName").textContent = name;
+    document.getElementById("labDetailTests").innerHTML = `<b>Tests:</b> ${Array.isArray(tests) ? tests.join(", ") : tests}`;
+    document.getElementById("labDetailPdf").href = `/uploads/${reportFile}`;
+    document.getElementById("labDetailPanel").style.display = "block";
+    document.getElementById("labDetailPanel").scrollIntoView({ behavior: "smooth" });
+}
 
-data.forEach(item=>{
+function closeLabDetail() {
+    document.getElementById("labDetailPanel").style.display = "none";
+    currentLabAppointmentId = null;
+}
 
-html+=`
+function openPrescription() {
+    if (!currentLabAppointmentId) return;
+    window.open(`/prescription.html?appointmentId=${currentLabAppointmentId}&patientId=${currentLabPatientId}&doctorId=${doctorId}&fromLab=1`, '_blank', 'width=500,height=700');
+}
 
-<div class="appointment-card">
-
-<h3>${item.name}</h3>
-
-<p>Lab Report Ready</p>
-
-<a href="${item.report_file}" target="_blank">
-
-Download Report
-
-</a>
-
-</div>
-
-`;
-
-});
-
-document.getElementById("completedLab").innerHTML=html;
-
+async function confirmLabReport() {
+    if (!currentLabAppointmentId) return;
+    const res = await fetch(`/appointment/confirm-lab/${currentLabAppointmentId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ medicines: [] })
+    });
+    const result = await res.json();
+    if (result.success) {
+        alert("Report confirmed.");
+        closeLabDetail();
+        loadCompletedLab();
+        loadAppointments();
+        loadWaitingLab();
+    } else {
+        alert(result.message || "Failed to confirm");
+    }
 }
 window.onload = function () {
     loadAppointments();

@@ -327,116 +327,79 @@ router.get("/doctor/labwaiting/:doctorId", async (req, res) => {
 
     try {
 
-        const doctorId = req.params.doctorId;
-
-        const result = await pool.query(
-
-            `
+        const result = await pool.query(`
             SELECT
-
-            a.id,
-
-            u.name,
-
-            lr.tests,
-
-            lr.status
-
-            FROM appointments a
-
+                lr.id,
+                lr.appointment_id,
+                lr.tests,
+                lr.status,
+                u.name
+            FROM lab_requests lr
+            JOIN appointments a
+                ON a.id = lr.appointment_id
             JOIN users u
+                ON u.id = a.patient_id
+            WHERE a.doctor_id = $1
+            AND UPPER(lr.status) = 'PENDING'
+            ORDER BY lr.id DESC
+        `,[req.params.doctorId]);
 
-            ON a.patient_id=u.id
+        const rows = result.rows.map(r=>({
 
-            JOIN lab_requests lr
+            ...r,
 
-            ON lr.appointment_id=a.id
+            tests:
+                typeof r.tests==="string"
+                    ? JSON.parse(r.tests)
+                    : r.tests
 
-            WHERE
+        }));
 
-            a.doctor_id=$1
-
-            AND
-
-            a.status='LAB_REPORT_IN_PROGRESS'
-
-            `,
-
-            [doctorId]
-
-        );
-
-        res.json(result.rows);
+        res.json(rows);
 
     }
-
     catch(err){
 
         console.log(err);
-
-        res.status(500).json(err);
+        res.status(500).json([]);
 
     }
 
 });
 router.get("/doctor/labcompleted/:doctorId", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const result = await pool.query(`
+            SELECT
+                a.id,
+                u.name,
+                lr.report_file,
+                json_agg(lr.tests) AS all_tests
+            FROM appointments a
+            JOIN users u ON a.patient_id = u.id
+            JOIN lab_requests lr ON lr.appointment_id = a.id
+            WHERE a.doctor_id = $1
+            AND lr.status = 'COMPLETED'
+            GROUP BY a.id, u.name, lr.report_file
+        `, [req.params.doctorId]);
 
-    const pool=req.app.locals.pool;
+        const rows = result.rows.map(r => {
+            let tests = [];
+            try {
+                (r.all_tests || []).forEach(t => {
+                    const parsed = typeof t === "string" ? JSON.parse(t) : t;
+                    if (Array.isArray(parsed)) tests = tests.concat(parsed);
+                    else tests.push(parsed);
+                });
+            } catch(e) {}
+            return { ...r, tests };
+        });
 
-    try{
-
-        const doctorId=req.params.doctorId;
-
-        const result=await pool.query(
-
-        `
-
-        SELECT
-
-        a.id,
-
-        u.name,
-
-        lr.tests,
-
-        lr.report_file
-
-        FROM appointments a
-
-        JOIN users u
-
-        ON a.patient_id=u.id
-
-        JOIN lab_requests lr
-
-        ON lr.appointment_id=a.id
-
-        WHERE
-
-        a.doctor_id=$1
-
-        AND
-
-        a.status='LAB_COMPLETED'
-
-        `,
-
-        [doctorId]
-
-        );
-
-        res.json(result.rows);
-
-    }
-
-    catch(err){
-
+        res.json(rows);
+    } catch(err) {
         console.log(err);
-
-        res.status(500).json(err);
-
+        res.status(500).json([]);
     }
-
 });
 /* =====================================================
    HELPERS

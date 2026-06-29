@@ -16,6 +16,8 @@ router.get("/register.html", (req, res) => res.sendFile(path.join(__dirname, "..
 router.get("/login.html", (req, res) => res.sendFile(path.join(__dirname, "../views/auth/login.html")));
 router.get("/otp.html", (req, res) => res.sendFile(path.join(__dirname, "../views/auth/otp.html")));
 
+router.get("/prescription.html", (req, res) => res.sendFile(path.join(__dirname, "../prescription.html")));
+router.get("/lab_selection.html", (req, res) => res.sendFile(path.join(__dirname, "../lab_selection.html")));
 router.get("/patient", (req, res) => res.sendFile(path.join(__dirname, "../views/patient/patient.html")));
 router.get("/doctor", (req, res) => res.sendFile(path.join(__dirname, "../views/doctor/doctor.html")));
 router.get("/lab", (req, res) => res.sendFile(path.join(__dirname, "../views/lab/lab.html")));

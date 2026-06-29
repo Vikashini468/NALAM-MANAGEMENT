@@ -12,14 +12,12 @@ const server = http.createServer(app);
 /* ===========================
    BODY PARSER
 =========================== */
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /* ===========================
    DATABASE
 =========================== */
-
 const pool = new Pool({
     user: "postgres",
     host: "localhost",
@@ -31,9 +29,15 @@ const pool = new Pool({
 app.locals.pool = pool;
 
 /* ===========================
+   STATIC FILES (PUT FIRST)
+=========================== */
+app.use(express.static(path.join(__dirname, "views")));
+app.use(express.static(__dirname));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+/* ===========================
    ROUTES
 =========================== */
-
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
@@ -47,32 +51,24 @@ app.use("/", authRoutes);
 app.use("/", patientRoutes);
 app.use("/", doctorRoutes);
 
-/* Lab Routes */
-
+/* IMPORTANT */
 app.use("/lab", labRoutes);
 
 /* ===========================
-   STATIC FILES
+   DEFAULT ROUTE (IMPORTANT)
 =========================== */
-app.use(express.static(__dirname));
-app.use(express.static(path.join(__dirname, "views")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+});
 
+/* OTP */
 app.get("/otp.html", (req, res) => {
-    res.sendFile(
-        path.join(
-            __dirname,
-            "views",
-            "auth",
-            "otp.html"
-        )
-    );
+    res.sendFile(path.join(__dirname, "views", "auth", "otp.html"));
 });
 
 /* ===========================
    SERVER
 =========================== */
-
 server.listen(3001, () => {
     console.log("Server Running on Port 3001");
 });
