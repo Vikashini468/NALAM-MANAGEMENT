@@ -223,63 +223,28 @@ await pool.query(`
    MY APPOINTMENTS
 ===================================================== */
 
-router.get("/doctor/appointments/:id", async (req, res) => {
-  const pool = req.app.locals.pool;
-
-  try {
-    const result = await pool.query(`
-    SELECT
-        a.id,
-        a.patient_id,
-        a.doctor_id,
-        a.appointment_date,
-        a.appointment_time,
-        a.token_no,
-        a.status,
-        a.symptoms,
-
-        u.name AS patient_name,
-
-        p.age,
-        p.gender,
-        p.blood_group
-
-    FROM appointments a
-
-    JOIN users u ON u.id = a.patient_id
-    LEFT JOIN patients p ON p.user_id = a.patient_id
-
-    WHERE a.doctor_id = $1
-
-    ORDER BY a.appointment_date ASC, a.appointment_time ASC
-`, [req.params.id]);
-
-    res.json(result.rows);
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Server Error");
-  }
-});
 router.get("/patient/appointments/:id", async (req, res) => {
     const pool = req.app.locals.pool;
 
     try {
         const result = await pool.query(`
             SELECT
-                a.id,
-                a.doctor_id,
-                a.patient_id,
-                a.appointment_date,
-                a.appointment_time,
-                a.token_no,
-                a.status,
-                a.symptoms,
-                u.name AS doctor_name
-            FROM appointments a
-            JOIN users u ON u.id = a.doctor_id
-            WHERE a.patient_id = $1
-            ORDER BY a.appointment_date DESC, a.appointment_time DESC
+    a.id,
+    a.doctor_id,
+    a.patient_id,
+    a.appointment_date,
+    a.appointment_time,
+    a.token_no,
+    a.status,
+    a.symptoms,
+    u.name AS doctor_name
+FROM appointments a
+JOIN users u
+ON u.id = a.doctor_id
+WHERE a.patient_id = $1
+AND UPPER(a.status) <> 'COMPLETED'
+ORDER BY a.appointment_date DESC,
+         a.appointment_time DESC;
         `, [req.params.id]);
 
         res.json(result.rows);
@@ -288,5 +253,75 @@ router.get("/patient/appointments/:id", async (req, res) => {
         console.log(err);
         res.status(500).json({ error: "Server Error" });
     }
+});
+router.get("/patient/prescriptions/:id", async (req, res) => {
+
+    const pool = req.app.locals.pool;
+
+    try {
+
+        const result = await pool.query(
+            `
+            SELECT
+                p.id,
+                m.medicine_name,
+                pm.quantity,
+                pm.duration,
+                u.name AS doctor_name,
+                p.created_at
+
+            FROM prescriptions p
+
+            JOIN prescription_medicines pm
+                ON pm.prescription_id = p.id
+
+            JOIN medicines m
+                ON m.id = pm.medicine_id
+
+            JOIN users u
+                ON u.id = p.doctor_id
+
+            WHERE p.patient_id = $1
+
+            ORDER BY p.created_at DESC
+            `,
+            [req.params.id]
+        );
+
+        res.json(result.rows);
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.status(500).json([]);
+
+    }
+
+});
+router.get("/patient/details/:id", async (req, res) => {
+    const pool = req.app.locals.pool;
+
+    const result = await pool.query(
+        `
+        SELECT
+            u.id,
+            u.name,
+            p.age,
+            p.gender,
+            p.blood_group
+        FROM users u
+        LEFT JOIN patients p
+            ON u.id = p.user_id
+        WHERE u.id = $1
+        `,
+        [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+        return res.status(404).json({ message: "Patient not found" });
+    }
+
+    res.json(result.rows[0]);
 });
 module.exports = router;

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 /* START CONSULTATION */
-router.post("start/:id", async (req, res) => {
+router.post("/start/:id", async (req, res) => {
     const pool = req.app.locals.pool;
 
     await pool.query(`
@@ -15,7 +15,7 @@ router.post("start/:id", async (req, res) => {
 });
 
 /* GET DETAILS */
-router.get("details/:id", async (req, res) => {
+router.get("/details/:id", async (req, res) => {
     const pool = req.app.locals.pool;
 
     const result = await pool.query(`
@@ -36,5 +36,30 @@ router.get("details/:id", async (req, res) => {
 
     res.json(result.rows[0]);
 });
+/* COMPLETE APPOINTMENT */
+router.post("/complete/:id", async (req, res) => {
 
+    const pool = req.app.locals.pool;
+
+    try {
+
+        await pool.query(
+            `
+            UPDATE appointments
+            SET status = 'Completed'
+            WHERE id = $1
+            `,
+            [req.params.id]
+        );
+
+        res.json({ success: true });
+
+    } catch (err) {
+
+        console.log(err);
+        res.status(500).json({ success: false });
+
+    }
+
+});
 module.exports = router;

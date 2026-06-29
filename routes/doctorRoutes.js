@@ -222,30 +222,32 @@ router.get("/doctor/appointments/:id", async (req, res) => {
         const doctorId = parseInt(req.params.id);
 
         const result = await pool.query(
-            `
-            SELECT
-                a.id,
-                a.patient_id,
-                a.doctor_id,
-                a.appointment_date,
-                a.appointment_time,
-                a.token_no,
-                a.status,
-                a.symptoms,
-
-                u.name AS patient_name,
-                p.age,
-                p.gender,
-                p.blood_group
-
-            FROM appointments a
-            JOIN users u ON u.id = a.patient_id
-            LEFT JOIN patients p ON p.user_id = a.patient_id
-            WHERE a.doctor_id = $1
-            ORDER BY a.appointment_date, a.appointment_time
-            `,
-            [doctorId]
-        );
+`
+SELECT
+    a.id,
+    a.patient_id,
+    a.doctor_id,
+    a.appointment_date,
+    a.appointment_time,
+    a.token_no,
+    a.status,
+    a.symptoms,
+    u.name AS patient_name,
+    p.age,
+    p.gender,
+    p.blood_group
+FROM appointments a
+JOIN users u
+    ON u.id = a.patient_id
+LEFT JOIN patients p
+    ON p.user_id = a.patient_id
+WHERE a.doctor_id = $1
+AND a.appointment_date = CURRENT_DATE
+AND UPPER(a.status) IN ('WAITING','INPROGRESS')
+ORDER BY a.token_no
+`,
+[doctorId]
+);
 
         res.json(result.rows);
 
@@ -283,7 +285,159 @@ router.get("/doctors", async (req, res) => {
     }
 });
 
+router.get("/doctor/profile/:id", async (req, res) => {
 
+    const pool = req.app.locals.pool;
+
+    try {
+
+        const result = await pool.query(
+            `
+            SELECT
+                u.id,
+                u.name,
+                d.specialisation
+            FROM users u
+            JOIN doctors d
+                ON u.id = d.user_id
+            WHERE u.id = $1
+            `,
+            [req.params.id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: "Doctor not found"
+            });
+        }
+
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            message: "Server Error"
+        });
+    }
+
+});
+router.get("/doctor/labwaiting/:doctorId", async (req, res) => {
+
+    const pool = req.app.locals.pool;
+
+    try {
+
+        const doctorId = req.params.doctorId;
+
+        const result = await pool.query(
+
+            `
+            SELECT
+
+            a.id,
+
+            u.name,
+
+            lr.tests,
+
+            lr.status
+
+            FROM appointments a
+
+            JOIN users u
+
+            ON a.patient_id=u.id
+
+            JOIN lab_requests lr
+
+            ON lr.appointment_id=a.id
+
+            WHERE
+
+            a.doctor_id=$1
+
+            AND
+
+            a.status='LAB_REPORT_IN_PROGRESS'
+
+            `,
+
+            [doctorId]
+
+        );
+
+        res.json(result.rows);
+
+    }
+
+    catch(err){
+
+        console.log(err);
+
+        res.status(500).json(err);
+
+    }
+
+});
+router.get("/doctor/labcompleted/:doctorId", async (req, res) => {
+
+    const pool=req.app.locals.pool;
+
+    try{
+
+        const doctorId=req.params.doctorId;
+
+        const result=await pool.query(
+
+        `
+
+        SELECT
+
+        a.id,
+
+        u.name,
+
+        lr.tests,
+
+        lr.report_file
+
+        FROM appointments a
+
+        JOIN users u
+
+        ON a.patient_id=u.id
+
+        JOIN lab_requests lr
+
+        ON lr.appointment_id=a.id
+
+        WHERE
+
+        a.doctor_id=$1
+
+        AND
+
+        a.status='LAB_COMPLETED'
+
+        `,
+
+        [doctorId]
+
+        );
+
+        res.json(result.rows);
+
+    }
+
+    catch(err){
+
+        console.log(err);
+
+        res.status(500).json(err);
+
+    }
+
+});
 /* =====================================================
    HELPERS
 ===================================================== */
