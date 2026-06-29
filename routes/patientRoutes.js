@@ -242,7 +242,7 @@ FROM appointments a
 JOIN users u
 ON u.id = a.doctor_id
 WHERE a.patient_id = $1
-AND UPPER(a.status) <> 'COMPLETED'
+AND UPPER(a.status) NOT IN ('COMPLETED', 'REVIEWED', 'LAB_COMPLETED', 'INPROGRESS')
 ORDER BY a.appointment_date DESC,
          a.appointment_time DESC;
         `, [req.params.id]);
@@ -299,6 +299,43 @@ router.get("/patient/prescriptions/:id", async (req, res) => {
     }
 
 });
+router.get("/patient/billing/:id", async (req, res) => {
+    const pool = req.app.locals.pool;
+    try {
+        const result = await pool.query(`
+            SELECT
+                a.id AS appointment_id,
+                a.appointment_date,
+                du.name AS doctor_name,
+                COALESCE(ds.consultation_fee, 0) AS consultation_fee,
+                COALESCE(
+                    json_agg(
+                        json_build_object(
+                            'medicine', m.medicine_name,
+                            'quantity', pm.quantity,
+                            'price', m.price,
+                            'total', pm.quantity * m.price
+                        )
+                    ) FILTER (WHERE m.id IS NOT NULL), '[]'
+                ) AS medicines
+            FROM appointments a
+            JOIN users du ON du.id = a.doctor_id
+            LEFT JOIN doctor_schedule ds ON ds.doctor_id = a.doctor_id
+            LEFT JOIN prescriptions p ON p.appointment_id = a.id
+            LEFT JOIN prescription_medicines pm ON pm.prescription_id = p.id
+            LEFT JOIN medicines m ON m.id = pm.medicine_id
+            WHERE a.patient_id = $1
+            AND UPPER(a.status) IN ('COMPLETED','REVIEWED','LAB_COMPLETED')
+            GROUP BY a.id, a.appointment_date, du.name, ds.consultation_fee
+            ORDER BY a.appointment_date DESC
+        `, [req.params.id]);
+        res.json(result.rows);
+    } catch(err) {
+        console.error(err);
+        res.status(500).json([]);
+    }
+});
+
 router.get("/patient/details/:id", async (req, res) => {
     const pool = req.app.locals.pool;
 

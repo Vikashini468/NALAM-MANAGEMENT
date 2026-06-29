@@ -43,9 +43,9 @@ router.post("/register", upload.any(), async (req, res) => {
         await sendOTP(email, otp);
 
         const userResult = await pool.query(
-            `INSERT INTO users (name, username, email, mobile, password, role, otp, otp_expires, verified, approved)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false,false) RETURNING id`,
-            [name, username, email, mobile, hashedPassword, role, otp, otpExpires]
+            `INSERT INTO users (name, username, email, mobile, password, role, gender, otp, otp_expires, verified, approved)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,false,false) RETURNING id`,
+            [name, username, email, mobile, hashedPassword, role, gender, otp, otpExpires]
         );
         const userId = userResult.rows[0].id;
         const photo = req.files && req.files.length > 0 ? req.files[0].filename : null;

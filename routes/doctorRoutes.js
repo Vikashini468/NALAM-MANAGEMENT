@@ -270,9 +270,13 @@ router.get("/doctors", async (req, res) => {
             SELECT
                 users.id,
                 users.name,
-                doctors.specialisation AS specialization
+                users.gender,
+                doctors.specialisation AS specialization,
+                doctors.photo,
+                COALESCE(ds.consultation_fee, 0) AS consultation_fee
             FROM users
             JOIN doctors ON users.id = doctors.user_id
+            LEFT JOIN doctor_schedule ds ON ds.doctor_id = users.id
             WHERE users.approved = true
             `
         );
@@ -372,6 +376,7 @@ router.get("/doctor/labcompleted/:doctorId", async (req, res) => {
         const result = await pool.query(`
             SELECT
                 a.id,
+                a.patient_id,
                 u.name,
                 lr.report_file,
                 json_agg(lr.tests) AS all_tests
@@ -380,7 +385,7 @@ router.get("/doctor/labcompleted/:doctorId", async (req, res) => {
             JOIN lab_requests lr ON lr.appointment_id = a.id
             WHERE a.doctor_id = $1
             AND lr.status = 'COMPLETED'
-            GROUP BY a.id, u.name, lr.report_file
+            GROUP BY a.id, a.patient_id, u.name, lr.report_file
         `, [req.params.doctorId]);
 
         const rows = result.rows.map(r => {

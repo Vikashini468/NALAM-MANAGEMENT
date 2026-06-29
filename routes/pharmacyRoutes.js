@@ -102,26 +102,14 @@ router.post("/pharmacy/prescriptions", async (req, res) => {
         const {
             patientId,
             doctorId,
+            appointmentId,
             medicines
         } = req.body;
 
-        // Create one prescription
         const prescriptionResult = await pool.query(
-            `
-            INSERT INTO prescriptions
-            (
-                patient_id,
-                doctor_id,
-                notes
-            )
-            VALUES ($1,$2,$3)
-            RETURNING id
-            `,
-            [
-                patientId,
-                doctorId,
-                ""
-            ]
+            `INSERT INTO prescriptions (patient_id, doctor_id, appointment_id, notes)
+             VALUES ($1,$2,$3,'') RETURNING id`,
+            [patientId, doctorId, appointmentId]
         );
 
         const prescriptionId = prescriptionResult.rows[0].id;
