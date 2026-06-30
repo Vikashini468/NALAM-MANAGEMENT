@@ -178,137 +178,207 @@
 <script>
   let currentRequestId = null;
 
-/* =========================
-   LOAD LAB REQUESTS
-========================= */
+/* ===========================
+   LOAD PENDING LAB REQUESTS
+=========================== */
 
 async function loadLabRequests() {
+
     try {
-        const res = await fetch("/lab/requests");
-        const data = await res.json();
+
+        const response = await fetch("/lab/requests");
+        const requests = await response.json();
 
         const grid = document.getElementById("labGrid");
         grid.innerHTML = "";
 
-        if (!data || data.length === 0) {
-            grid.innerHTML = "<p>No lab requests found.</p>";
+        if (!Array.isArray(requests) || requests.length === 0) {
+
+            grid.innerHTML = `
+                <div class="card">
+                    <h3>No Pending Lab Requests</h3>
+                </div>
+            `;
             return;
         }
 
-        data.forEach(req => {
+        requests.forEach(item => {
 
-    let tests = [];
+            let tests = [];
 
-    try {
-        tests = typeof req.tests === "string"
-            ? JSON.parse(req.tests)
-            : req.tests;
-    } catch (e) {
-        tests = [];
+            if (Array.isArray(item.tests)) {
+
+                tests = item.tests;
+
+            } else {
+
+                try {
+                    tests = JSON.parse(item.tests);
+                } catch {
+                    tests = [];
+                }
+
+            }
+
+            const card = document.createElement("div");
+            card.className = "card";
+
+            card.innerHTML = `
+                <h3>${item.patient_name || "Unknown Patient"}</h3>
+
+                <p>
+                    <b>Doctor :</b>
+                    ${item.doctor_name || "-"}
+                </p>
+
+                <p>
+                    <b>Status :</b>
+                    ${item.status}
+                </p>
+
+                <p>
+                    <b>Tests :</b><br>
+                    ${tests.join("<br>")}
+                </p>
+
+                <button class="btn">
+                    View
+                </button>
+            `;
+
+            card.querySelector("button").addEventListener("click", () => {
+
+                openRequest(
+                    item.id,
+                    item.patient_name || "Unknown Patient",
+                    item.doctor_name || "-",
+                    tests
+                );
+
+            });
+
+            grid.appendChild(card);
+
+        });
+
     }
 
-    grid.innerHTML += `
-        <div class="card">
-            <h3>${req.patient_name || "Unknown Patient"}</h3>
-            <p><b>Doctor:</b> ${req.doctor_name || "-"}</p>
-            <p><b>Tests:</b> ${tests.join(", ")}</p>
+    catch (err) {
 
-            <button class="btn"
-                data-id="${req.id}"
-                data-patient="${req.patient_name || ''}"
-                data-doctor="${req.doctor_name || ''}"
-                data-tests='${JSON.stringify(tests)}'
-                onclick="openRequest(this)">
-                View
-            </button>
-        </div>
-    `;
-});
-    } catch (err) {
-        console.error("Error loading requests:", err);
+        console.error(err);
+
+        document.getElementById("labGrid").innerHTML =
+            "<p>Unable to load requests.</p>";
+
     }
+
 }
 
-/* =========================
-   OPEN REQUEST MODAL
-========================= */
+/* ===========================
+   OPEN MODAL
+=========================== */
 
-function openRequest(btn) {
-
-    const id = btn.dataset.id;
-    const patient = btn.dataset.patient;
-    const doctor = btn.dataset.doctor;
-    const tests = JSON.parse(btn.dataset.tests || "[]");
+function openRequest(id, patient, doctor, tests) {
 
     currentRequestId = id;
 
     document.getElementById("mPatient").innerText =
-        "Patient: " + patient;
+        "Patient : " + patient;
 
     document.getElementById("mDoctor").innerText =
-        "Doctor: " + doctor;
+        "Doctor : " + doctor;
 
     document.getElementById("mTests").innerHTML =
-        "<b>Tests:</b><br>" +
-        tests.map(t => "✔ " + t).join("<br>");
+        "<b>Requested Tests</b><br><br>" +
+        tests.map(test => "✔ " + test).join("<br>");
 
     document.getElementById("modal").style.display = "flex";
+
 }
 
-/* =========================
+/* ===========================
    CLOSE MODAL
-========================= */
+=========================== */
 
 function closeModal() {
+
     document.getElementById("modal").style.display = "none";
+
     currentRequestId = null;
+
+    document.getElementById("reportFile").value = "";
+
 }
 
-/* =========================
-   UPLOAD REPORT (PDF)
-========================= */
+/* ===========================
+   UPLOAD PDF REPORT
+=========================== */
 
 async function uploadReport() {
 
-    const fileInput = document.getElementById("reportFile");
+    const file = document.getElementById("reportFile").files[0];
 
-    if (!fileInput.files[0]) {
-        alert("Please select a PDF file");
+    if (!file) {
+
+        alert("Please select a PDF report.");
+
         return;
+
     }
 
     const formData = new FormData();
-    formData.append("report", fileInput.files[0]);
+
+    formData.append("report", file);
 
     try {
-        const res = await fetch(`/lab/upload/${currentRequestId}`, {
-            method: "POST",
-            body: formData
-        });
 
-        const result = await res.json();
+        const response = await fetch(
+            `/lab/upload/${currentRequestId}`,
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const result = await response.json();
 
         if (result.success) {
-            alert("Report uploaded successfully");
+
+            alert("Report uploaded successfully.");
+
             closeModal();
+
             loadLabRequests();
-        } else {
-            alert(result.message || "Upload failed");
+
         }
 
-    } catch (err) {
-        console.error(err);
-        alert("Server error while uploading");
+        else {
+
+            alert(result.message);
+
+        }
+
     }
+
+    catch (err) {
+
+        console.error(err);
+
+        alert("Upload failed.");
+
+    }
+
 }
 
-/* =========================
-   INIT
-========================= */
+/* ===========================
+   INITIAL LOAD
+=========================== */
 
-window.onload = function () {
+window.addEventListener("load", () => {
+
     loadLabRequests();
-};
+
+});
 </script>
 
 </body>
