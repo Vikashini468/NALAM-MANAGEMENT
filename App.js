@@ -5,9 +5,15 @@ const { Pool } = require("pg");
 const path = require("path");
 
 dotenv.config();
+const { Server } = require("socket.io"); 
 
 const app = express();
 const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*"
+    }
+});
 
 /* ===========================
    BODY PARSER
@@ -44,6 +50,15 @@ const patientRoutes = require("./routes/patientRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const pharmacyRoutes = require("./routes/pharmacyRoutes");
 const labRoutes = require("./routes/labRoutes");
+const emergencyRoutes = require("./routes/emergencyRoutes");
+const purchaseRoutes = require("./routes/purchaseRoutes")(pool, io);
+const maintenanceRoutes = require("./routes/maintenanceRoutes")(pool, io);
+const adminRoutes = require("./routes/adminRoutes");
+
+app.use("/admin", adminRoutes);
+app.use("/purchase", purchaseRoutes);
+app.use("/maintenance", maintenanceRoutes);
+app.use("/emergency", emergencyRoutes);
 
 app.use("/appointment", appointmentRoutes);
 app.use("/", pharmacyRoutes);
@@ -69,6 +84,6 @@ app.get("/otp.html", (req, res) => {
 /* ===========================
    SERVER
 =========================== */
-server.listen(3001, () => {
-    console.log("Server Running on Port 3001");
+server.listen(5000, () => {
+    console.log("Server Running on Port 5000");
 });

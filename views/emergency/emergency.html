@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Emergency Booking</title>
+
+    <link rel="stylesheet" href="emergency.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚑 Emergency Booking</h1>
+
+    <form id="emergencyForm">
+
+        <!-- Patient -->
+
+        <div class="group">
+
+            <label>Patient ID</label>
+
+            <input
+                type="number"
+                id="patientId"
+                placeholder="Enter Patient ID"
+                required>
+
+        </div>
+
+        <!-- Category -->
+
+        <div class="group">
+
+            <label>Emergency Category</label>
+
+            <select id="category" required>
+
+                <option value="">Select</option>
+
+                <option>Critical Emergency</option>
+
+                <option>Child Emergency</option>
+
+                <option>Elderly Patient</option>
+
+                <option>Pregnancy Emergency</option>
+
+                <option>Accident/Trauma</option>
+
+                <option>Cardiac Emergency</option>
+
+                <option>Stroke</option>
+
+                <option>Snake Bite</option>
+
+                <option>Burns</option>
+
+                <option>Other</option>
+
+            </select>
+
+        </div>
+
+        <!-- Priority -->
+
+        <div class="group">
+
+            <label>Priority</label>
+
+            <select id="priority" required>
+
+                <option value="">Select</option>
+
+                <option value="Critical">
+                    🔴 Critical
+                </option>
+
+                <option value="Very Urgent">
+                    🟠 Very Urgent
+                </option>
+
+                <option value="Urgent">
+                    🟡 Urgent
+                </option>
+
+                <option value="Less Urgent">
+                    🟢 Less Urgent
+                </option>
+
+            </select>
+
+        </div>
+
+        <!-- Department -->
+
+        <div class="group">
+
+            <label>Department</label>
+
+            <select id="department" required>
+
+                <option value="">Select</option>
+
+                <option>Emergency Medicine</option>
+
+                <option>Cardiology</option>
+
+                <option>Neurology</option>
+
+                <option>Orthopedics</option>
+
+                <option>Pediatrics</option>
+
+                <option>General Medicine</option>
+
+            </select>
+
+        </div>
+
+        <!-- Doctor -->
+
+        <div class="group">
+
+            <label>Doctor</label>
+
+            <select id="doctorId">
+
+                <option value="">Assign Later</option>
+
+            </select>
+
+        </div>
+
+        <!-- Symptoms -->
+
+        <div class="group">
+
+            <label>Symptoms</label>
+
+            <textarea
+                id="symptoms"
+                rows="5"
+                placeholder="Enter symptoms..."
+                required></textarea>
+
+        </div>
+
+        <!-- Ambulance -->
+
+        <div class="group">
+
+            <label>
+
+                <input
+                    type="checkbox"
+                    id="ambulance">
+
+                Ambulance Required
+
+            </label>
+
+        </div>
+
+        <!-- Arrival -->
+
+        <div class="group">
+
+            <label>Arrival Type</label>
+
+            <select id="arrivalType">
+
+                <option>Walk-in</option>
+
+                <option>Ambulance</option>
+
+                <option>Referral</option>
+
+            </select>
+
+        </div>
+
+        <!-- Notes -->
+
+        <div class="group">
+
+            <label>Emergency Notes</label>
+
+            <textarea
+                id="notes"
+                rows="4"></textarea>
+
+        </div>
+
+        <button type="submit">
+
+            Create Emergency Case
+
+        </button>
+
+    </form>
+
+</div>
+
+<script src="emergency.js"></script>
+
+</body>
+</html>

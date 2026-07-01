@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Emergency Details</title>
+
+    <link rel="stylesheet" href="emergencyQueue.css">
+
+    <style>
+
+        .section{
+
+            background:white;
+            padding:20px;
+            margin-bottom:20px;
+            border-radius:10px;
+            box-shadow:0 3px 10px rgba(0,0,0,.08);
+
+        }
+
+        .section h2{
+
+            margin-bottom:15px;
+            color:#d32f2f;
+
+        }
+
+        .row{
+
+            display:grid;
+            grid-template-columns:180px 1fr;
+            margin:10px 0;
+
+        }
+
+        .label{
+
+            font-weight:bold;
+
+        }
+
+        textarea{
+
+            width:100%;
+            padding:12px;
+            border:1px solid #ccc;
+            border-radius:6px;
+            resize:vertical;
+
+        }
+
+        select{
+
+            width:250px;
+            padding:10px;
+            margin-top:10px;
+
+        }
+
+        button{
+
+            margin-top:20px;
+            background:#1976d2;
+            color:white;
+            border:none;
+            padding:12px 20px;
+            border-radius:6px;
+            cursor:pointer;
+
+        }
+
+        button:hover{
+
+            background:#1565c0;
+
+        }
+
+        .actions{
+
+            display:flex;
+            gap:15px;
+            flex-wrap:wrap;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚑 Emergency Case</h1>
+
+    <!-- Patient Information -->
+
+    <div class="section">
+
+        <h2>Patient Information</h2>
+
+        <div class="row">
+
+            <div class="label">Name</div>
+
+            <div id="patientName">Loading...</div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="label">Age</div>
+
+            <div id="patientAge"></div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="label">Gender</div>
+
+            <div id="patientGender"></div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="label">Blood Group</div>
+
+            <div id="bloodGroup"></div>
+
+        </div>
+
+    </div>
+
+    <!-- Emergency Information -->
+
+    <div class="section">
+
+        <h2>Emergency Information</h2>
+
+        <div class="row">
+
+            <div class="label">Category</div>
+
+            <div id="category"></div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="label">Priority</div>
+
+            <div id="priority"></div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="label">Department</div>
+
+            <div id="department"></div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="label">Symptoms</div>
+
+            <div id="symptoms"></div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="label">Notes</div>
+
+            <div id="notes"></div>
+
+        </div>
+
+    </div>
+
+    <!-- Status -->
+
+    <div class="section">
+
+        <h2>Update Status</h2>
+
+        <select id="status">
+
+            <option>Booked</option>
+
+            <option>Triage</option>
+
+            <option>Doctor Assigned</option>
+
+            <option>Treatment</option>
+
+            <option>Admitted</option>
+
+            <option>Discharged</option>
+
+            <option>Completed</option>
+
+        </select>
+
+        <br>
+
+        <button onclick="updateStatus()">
+
+            Update Status
+
+        </button>
+
+    </div>
+
+    <!-- Actions -->
+
+    <div class="section">
+
+        <h2>Actions</h2>
+
+        <div class="actions">
+
+            <button onclick="requestLab()">
+
+                🧪 Request Lab
+
+            </button>
+
+            <button onclick="openPrescription()">
+
+                💊 Prescription
+
+            </button>
+
+            <button onclick="admitPatient()">
+
+                🏥 Admit Patient
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="emergencyDetails.js"></script>
+
+</body>
+
+</html>
